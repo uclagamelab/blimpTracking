@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <python2.7/Python.h>
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
 #include "cvblob.h"
