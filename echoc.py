@@ -1,3 +1,4 @@
+import os
 import socket
 
 while 1:
@@ -8,4 +9,6 @@ while 1:
     data = s.recv(1024)
     s.close()
     print 'Received', repr(data)
-
+    #this command will set the position of servo 0 to 5000
+    #accepable ranges could be between 4000 - 8000 but that should be confirmed
+    #os.system("~/src/maestro_linux/UscCmd --servo 0,5000)

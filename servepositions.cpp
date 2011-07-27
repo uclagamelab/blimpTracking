@@ -19,6 +19,12 @@
 using namespace cvb;
 using namespace std;
 
+void cleanup(CvCapture* capture){
+  cvReleaseCapture(&capture);
+  cvDestroyWindow( "ImageWindow" );
+  exit(0);
+}
+
 int main( int argc, char** argv ) {
   int s, s2, t, len;
   struct sockaddr_un local, remote;
@@ -88,45 +94,61 @@ int main( int argc, char** argv ) {
       //format a string that displays all blobs
       string results;
       char * s = NULL;
+      time_t now;
       for (CvBlobs::const_iterator it=blobs.begin(); it!=blobs.end(); ++it)
       {
-	cout << "Blob #" << it->second->label 
-	     << ": Area=" << it->second->area 
-	     << ", Centroid=(" << it->second->centroid.x << ", " << it->second->centroid.y << ")" 
-	     << endl;
-	
-	asprintf(&s, "Blob # %d : X= %f : Y= %f", it->second->label, it->second->centroid.x, it->second->centroid.y);
-	if (s > 0) results += s;
-	free(s);
+        //cout << "Blob #" << it->second->label 
+          //<< ": Area=" << it->second->area 
+          //<< ", Centroid=(" << it->second->centroid.x << ", " << it->second->centroid.y << ")" 
+          //<< endl;
+        now = time(0);
+        asprintf(&s, "$%d:%f:%f:%ld:%f", it->second->label, it->second->centroid.x, it->second->centroid.y, now, it->second->area);
+        if (s > 0) results += s;
+        free(s);
       }
       //done formatting results
       
       //get stuff from client and print results back
 
       const char * c_results = results.c_str();
-      //const char * c_results = "test";
+
       n = recv(s2, str, 100, 0);
       if(n <= 0) {
-	if (n < 0 ) perror("recv");
-	done = 1;
+        if (n < 0 ) perror("recv");
+        done = 1;
       }
-      if(strcmp(str, "1") == 0) printf("Recieved '1'");
+      string client_recv;
+      for(int i=0;i<n;i++) client_recv += str[i];
+
+
+      cout << client_recv << endl;
+      if( client_recv.compare("q") == 0){
+        printf("Recieved q\n");
+        cleanup(capture);
+      }else if( client_recv.compare("r")==0){
+        printf("Recieved r\n");
+      }
+
+
+
       if(!done) {
-	if (send(s2, c_results, strlen(c_results), 0) < 0){
-	    perror("send");
-	    done = 1;
-	  }
+        if (send(s2, c_results, strlen(c_results), 0) < 0){
+          perror("send");
+          done = 1;
+        }
       }
       
       
       cvShowImage( "ImageWindow", frame );
     } while (!done);
-    close(s2);
     
-    char c = cvWaitKey(1);
-    if( c == 27 ) break;
+    close(s2);
 
   }
   cvReleaseCapture( &capture );
   cvDestroyWindow( "ImageWindow" );
+  return 0;
 }
+
+
+
